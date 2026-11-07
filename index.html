@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#66a6ff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Global VoxAlarm Pro</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; transition: background 0.4s, color 0.4s; }
+    body { font-family: 'Cairo', Tahoma, Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #2d3748; overflow: hidden;
+        --panel-bg: rgba(255,255,255,0.65); --panel-border: rgba(255,255,255,0.9); --text-mut: #718096; --shadow: 0 20px 40px rgba(0,0,0,0.08); }
+    body.theme-candy { background: linear-gradient(120deg, #a8edea 0%, #fed6e3 100%); }
+    body.theme-candy #currentTime { color: #2b6cb0; }
+    body.theme-ocean { background: linear-gradient(120deg, #4facfe 0%, #00f2fe 100%); }
+    body.theme-ocean #currentTime { color: #004e92; }
+    body.theme-sunset { background: linear-gradient(120deg, #fa709a 0%, #fee140 100%); }
+    body.theme-sunset #currentTime { color: #d81b60; }
+    body.theme-mint { background: linear-gradient(120deg, #43e97b 0%, #38f9d7 100%); }
+    body.theme-mint #currentTime { color: #00695c; }
+    body.theme-dark { background: linear-gradient(120deg, #1f2937 0%, #111827 100%); color: #f3f4f6;
+        --panel-bg: rgba(31,41,55,0.7); --panel-border: rgba(255,255,255,0.1); --text-mut: #9ca3af; --shadow: 0 20px 40px rgba(0,0,0,0.4); }
+    body.theme-dark #currentTime { color: #60a5fa; }
+
+    #splashScreen { position: fixed; inset: 0; z-index: 9999; background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: transform 0.8s; }
+    .splash-icon { font-size: 100px; margin-bottom: 20px; animation: ring 1s infinite ease-in-out; }
+    @keyframes ring { 0%,100%{transform:rotate(0);} 25%{transform:rotate(15deg);} 75%{transform:rotate(-15deg);} }
+    .splash-title { font-size: 40px; font-weight: 900; color: white; margin-bottom: 10px; }
+    .splash-hide { transform: translateY(-100%); pointer-events: none; }
+
+    .glass-panel { position: relative; z-index: 10; background: var(--panel-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--panel-border); border-radius: 35px; width: 90%; max-width: 380px; padding: 30px 20px 40px 20px; display: flex; flex-direction: column; align-items: center; box-shadow: var(--shadow); margin-bottom: 120px; }
+    .top-bar { position: absolute; top: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; align-items: center; }
+    .top-bar select { background: var(--panel-bg); border: 1px solid rgba(0,0,0,0.1); padding: 6px 12px; border-radius: 20px; font-family: inherit; font-weight: 700; color: inherit; outline: none; cursor: pointer; }
+    .settings-btn { background: var(--panel-bg); border: 1px solid rgba(0,0,0,0.1); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; font-size: 20px; color: inherit; transition: transform 0.2s; }
+    .settings-btn:active { transform: rotate(90deg) scale(0.9); }
+    #currentTime { font-size: 65px; font-weight: 900; letter-spacing: -2px; line-height: 1; font-variant-numeric: tabular-nums; margin-top: 20px; direction: ltr; }
+    #currentDate { font-size: 15px; color: var(--text-mut); margin-top: 5px; font-weight: 700; }
+    .divider { width: 80%; height: 1px; background: rgba(0,0,0,0.1); margin: 20px 0; }
+    .alarm-status { text-align: center; margin-bottom: 10px; display: flex; flex-direction: column; align-items: center; width: 100%; }
+    .alarm-status .label { font-size: 13px; color: var(--text-mut); font-weight: 700; margin-bottom: 5px; }
+    .alarm-status .time { font-size: 40px; font-weight: 900; color: #e53e3e; text-shadow: 0 4px 15px rgba(229,62,62,0.2); direction: ltr; }
+    .alarm-status .msg { font-size: 13px; color: inherit; margin-top: 8px; min-height: 20px; font-weight: 700; text-align: center; line-height: 1.5; }
+    .days-repeat { display: flex; justify-content: center; gap: 5px; margin-top: 10px; }
+    .day-btn { width: 35px; height: 35px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); background: transparent; font-family: inherit; font-weight: 700; cursor: pointer; color: var(--text-mut); transition: 0.2s; }
+    .day-btn.active { background: #4DB8FF; color: white; border-color: #4DB8FF; }
+    .music-selector { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; background: rgba(0,0,0,0.03); padding: 15px; border-radius: 15px; width: 100%; }
+    body.theme-dark .music-selector { background: rgba(255,255,255,0.05); }
+    .upload-btn { background: #4DB8FF; color: white; border: none; border-radius: 12px; padding: 12px; font-family: inherit; font-weight: 700; cursor: pointer; font-size: 14px; display: flex; justify-content: center; align-items: center; gap: 8px; }
+    .sleep-btn { background: #9b59b6; color: white; border: none; border-radius: 12px; padding: 10px; font-family: inherit; font-weight: 700; cursor: pointer; font-size: 13px; margin-top: 8px; display: flex; justify-content: center; align-items: center; gap: 5px; }
+    .sleep-btn.active { background: #e74c3c; }
+    button { position: relative; overflow: hidden; }
+    .ripple { position: absolute; border-radius: 50%; background: rgba(255,255,255,0.6); transform: scale(0); animation: rippleAnim 0.6s linear; pointer-events: none; }
+    @keyframes rippleAnim { to { transform: scale(4); opacity: 0; } }
+
+    .mic-container { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 20; display: flex; flex-direction: column; align-items: center; }
+    #micBtn { width: 110px; height: 110px; border-radius: 50%; background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%); border: 6px solid white; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 15px 35px rgba(255,154,158,0.4); position: relative; overflow: hidden; animation: idlePulse 2s infinite; }
+    @keyframes idlePulse { 0% { box-shadow: 0 0 0 0 rgba(255,154,158,0.5); } 70% { box-shadow: 0 0 0 20px rgba(255,154,158,0); } 100% { box-shadow: 0 0 0 0 rgba(255,154,158,0); } }
+    @keyframes listeningPulse { 0% { box-shadow: 0 0 0 0 rgba(253,160,133,0.7); } 70% { box-shadow: 0 0 0 25px rgba(253,160,133,0); } 100% { box-shadow: 0 0 0 0 rgba(253,160,133,0); } }
+    #micBtn:active { transform: scale(0.9); animation: none; }
+    #micBtn svg { width: 50px; height: 50px; fill: white; pointer-events: none; }
+    #micBtn.listening { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); animation: listeningPulse 1.5s infinite; }
+    .hint { font-size: 12px; color: var(--text-mut); margin-top: 8px; text-align: center; font-weight: 700; }
+    .manual-btn { background: transparent; border: 1px solid var(--text-mut); padding: 10px 20px; border-radius: 15px; color: inherit; font-family: inherit; font-weight: 700; font-size: 14px; cursor: pointer; margin-top: 15px; }
+    #cancelAlarmBtn { display: none; margin-top: 10px; background: transparent; color: #e53e3e; border: 1px solid #e53e3e; padding: 6px 16px; border-radius: 20px; font-family: inherit; font-weight: 700; cursor: pointer; font-size: 12px; }
+
+    #confirmPanel, #settingsModal { display: none; flex-direction: column; align-items: center; width: 90%; max-width: 380px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--panel-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding: 25px; border-radius: 35px; box-shadow: var(--shadow); z-index: 50; border: 1px solid var(--panel-border); }
+    #settingsModal { z-index: 200; background: #fff; color: #333; }
+    body.theme-dark #settingsModal { background: #1f2937; color: #fff; }
+    .confirm-card { background: rgba(0,0,0,0.05); border-radius: 20px; padding: 20px; width: 100%; margin-bottom: 20px; text-align: center; }
+    .confirm-card .parsed-time { font-size: 50px; font-weight: 900; color: #38a169; margin: 10px 0; direction: ltr; }
+    .btn-confirm { width: 100%; padding: 16px; border-radius: 16px; font-size: 20px; font-weight: 900; font-family: inherit; border: none; cursor: pointer; background: #48bb78; color: white; margin-bottom: 10px; }
+    .btn-retry { width: 100%; padding: 14px; border-radius: 16px; font-size: 16px; font-weight: 700; font-family: inherit; border: 1px solid var(--text-mut); cursor: pointer; background: transparent; color: inherit; }
+    .settings-content { width: 100%; }
+    .settings-content h2 { text-align: center; margin-bottom: 20px; }
+    .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.1); }
+    .setting-row span { font-weight: 700; font-size: 14px; }
+    .setting-row select { padding: 5px; border-radius: 8px; font-family: inherit; font-weight: bold; border: 1px solid #ccc; background: white; color: #333; }
+    .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+    .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background-color: #38a169; }
+    input:checked + .slider:before { transform: translateX(22px); }
+    .close-settings { width: 100%; padding: 15px; margin-top: 20px; border-radius: 15px; background: #3182ce; color: white; font-weight: 900; font-size: 16px; border: none; cursor: pointer; }
+
+    #ringingScreen { position: fixed; inset: 0; background: #ff4757; z-index: 500; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
+    #ringingScreen h1 { font-size: 80px; margin-bottom: 10px; animation: shake 0.5s infinite; color: white; }
+    @keyframes shake { 0% { transform: rotate(0deg); } 25% { transform: rotate(15deg); } 50% { transform: rotate(0deg); } 75% { transform: rotate(-15deg); } 100% { transform: rotate(0deg); } }
+    #ringingScreen h2 { font-size: 24px; color: white; margin-bottom: 20px; }
+    .ringing-btns { display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 300px; }
+    #stopBtn { padding: 20px; font-size: 24px; font-weight: 900; background: white; color: #ff4757; border: none; border-radius: 50px; width: 100%; cursor: pointer; }
+    #snoozeBtn { padding: 20px; font-size: 20px; font-weight: 900; background: #f6d365; color: #d35400; border: none; border-radius: 50px; width: 100%; cursor: pointer; }
+    .hidden { opacity: 0; pointer-events: none; }
+</style>
+</head>
+<body class="theme-candy">
+
+    <div id="splashScreen">
+        <div class="splash-icon">⏰</div>
+        <div class="splash-title">VoxAlarm Global</div>
+    </div>
+
+    <div id="settingsModal">
+        <div class="settings-content">
+            <h2>⚙️ الإعدادات</h2>
+            <div class="setting-row">
+                <span>ثيم الألوان</span>
+                <select id="setTheme" onchange="changeTheme()">
+                    <option value="candy">🍬 حلوى</option>
+                    <option value="ocean">🌊 محيط</option>
+                    <option value="sunset">🌅 غروب</option>
+                    <option value="mint">🌿 نعناع</option>
+                    <option value="dark">🌙 ليلي</option>
+                </select>
+            </div>
+            <div class="setting-row"><span>نظام 24 ساعة</span><label class="switch"><input type="checkbox" id="set24Hour"><span class="slider"></span></label></div>
+            <div class="setting-row"><span>تصاعد الصوت</span><label class="switch"><input type="checkbox" id="setFadeIn" checked><span class="slider"></span></label></div>
+            <div class="setting-row"><span>معادلة رياضية للإيقاف</span><label class="switch"><input type="checkbox" id="setMath"><span class="slider"></span></label></div>
+            <div class="setting-row">
+                <span>مدة الغفوة</span>
+                <select id="setSnoozeTime">
+                    <option value="5">5 دقائق</option>
+                    <option value="10" selected>10 دقائق</option>
+                    <option value="15">15 دقيقة</option>
+                </select>
+            </div>
+            <button class="close-settings" onclick="closeSettings()">حفظ وإغلاق</button>
+        </div>
+    </div>
+
+    <div class="glass-panel" id="mainPanel">
+        <div class="top-bar">
+            <select id="langSelect" onchange="changeLanguage()">
+                <option value="ar-SA">🇸🇦 العربية</option>
+                <option value="en-US">🇺🇸 English</option>
+            </select>
+            <button class="settings-btn" onclick="openSettings(event)">⚙️</button>
+        </div>
+        <div id="currentTime">00:00</div>
+        <div id="currentDate">...</div>
+        <div class="divider"></div>
+        <div class="alarm-status">
+            <div class="label" id="lblAlarm">المنبه التالي</div>
+            <div class="time" id="alarmTimeDisplay">--:--</div>
+            <div class="msg" id="statusMsg">اضغط على المايك وقل الوقت</div>
+            <div class="days-repeat" id="daysRepeat">
+                <button class="day-btn" onclick="toggleDay(this, 0)">ح</button>
+                <button class="day-btn" onclick="toggleDay(this, 1)">ن</button>
+                <button class="day-btn" onclick="toggleDay(this, 2)">ث</button>
+                <button class="day-btn" onclick="toggleDay(this, 3)">ر</button>
+                <button class="day-btn" onclick="toggleDay(this, 4)">خ</button>
+                <button class="day-btn" onclick="toggleDay(this, 5)">ج</button>
+                <button class="day-btn" onclick="toggleDay(this, 6)">س</button>
+            </div>
+            <button id="cancelAlarmBtn" onclick="cancelAlarm(event)">إلغاء ✕</button>
+        </div>
+        <div class="music-selector">
+            <button class="upload-btn" onclick="document.getElementById('audioUpload').click()">🎵 اختر نغمة من هاتفك</button>
+            <input type="file" id="audioUpload" accept="audio/*" style="display:none;" onchange="handleAudioUpload(event)">
+            <div style="font-size:12px; text-align:center; font-weight:700;" id="fileNameDisplay">لم يتم اختيار ملف</div>
+            <button class="sleep-btn" id="sleepSoundBtn" onclick="toggleSleepSound()">🌧️ تشغيل صوت المطر للنوم</button>
+        </div>
+        <button class="manual-btn" onclick="openManualPicker(event)">أو اختر الوقت يدوياً</button>
+        <input type="time" id="manualTimeInput" style="position:absolute; opacity:0; pointer-events:none; width:1px; height:1px;" onchange="handleManualTime()">
+    </div>
+
+    <div class="mic-container">
+        <button id="micBtn" onclick="startListening(event)">
+            <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+        </button>
+        <div class="hint" id="hintText">قل: "8 صباحاً"</div>
+    </div>
+
+    <div id="confirmPanel">
+        <div class="confirm-card">
+            <div class="parsed-text" id="lblConfirm">لقد فهمت أنك تريد الاستيقاظ الساعة:</div>
+            <div class="parsed-time" id="parsedTimeDisplay">08:00</div>
+            <div class="parsed-text" id="parsedPeriodDisplay">صباحاً</div>
+        </div>
+        <button class="btn-confirm" onclick="confirmAlarm(event)">موافق (تفعيل) ✓</button>
+        <button class="btn-retry" onclick="retryListening(event)">إعادة المحاولة 🎤</button>
+    </div>
+
+    <div id="ringingScreen">
+        <h1>⏰</h1>
+        <h2 id="ringingMsg">استيقظ! حان الوقت</h2>
+        <div id="mathPuzzle" style="display:none; background:white; padding:20px; border-radius:20px; margin-bottom:20px; color:#333; width:100%; max-width:300px;">
+            <h3 id="mathQuestion" style="font-size:24px; margin-bottom:15px; direction:ltr;">7 + 8 = ?</h3>
+            <input type="number" id="mathInput" style="width:100%; padding:15px; font-size:20px; border:2px solid #ccc; border-radius:10px; text-align:center; font-family:inherit; margin-bottom:10px; user-select:text;" placeholder="الإجابة">
+            <button onclick="checkMath(event)" style="width:100%; padding:15px; background:#4DB8FF; color:white; border:none; border-radius:10px; font-weight:900; font-size:18px;">تأكيد</button>
+        </div>
+        <div class="ringing-btns">
+            <button id="stopBtn" onclick="stopRinging(event)">إيقاف</button>
+            <button id="snoozeBtn" onclick="snoozeAlarm(event)">غفوة 💤</button>
+        </div>
+    </div>
+
+<script>
+    const locales = {
+        'ar-SA': { alarm: 'المنبه التالي', ask: 'اضغط على المايك وقل الوقت', hint: 'قل: "8 صباحاً" أو "3 و 15 دقيقة"', cancel: 'إلغاء ✕', manual: 'أو اختر الوقت يدوياً', confirmMsg: 'لقد فهمت أنك تريد الاستيقاظ الساعة:', am: 'صباحاً', pm: 'مساءً', confirmBtn: 'موافق (تفعيل) ✓', retryBtn: 'إعادة المحاولة 🎤', listening: 'أنا أسمعك...', success: 'تم ضبط المنبه بنجاح!', error: 'لم أفهم الوقت، حاول مرة أخرى.', wakeUp: 'استيقظ! حان الوقت', stop: 'إيقاف', snooze: 'غفوة 💤', snoozed: m => `تم تأجيل المنبه ${m} دقائق 💤`, noSpeech: 'المتصفح لا يدعم التعرف على الصوت. استخدم الاختيار اليدوي.' },
+        'en-US': { alarm: 'Next Alarm', ask: 'Tap the mic and say the time', hint: 'Say: "8 AM" or "3:15 PM"', cancel: 'Cancel ✕', manual: 'Or pick manually', confirmMsg: 'You want to wake up at:', am: 'AM', pm: 'PM', confirmBtn: 'Confirm ✓', retryBtn: 'Retry 🎤', listening: 'Listening...', success: 'Alarm set!', error: 'Did not catch time.', wakeUp: "Wake up! It's time", stop: 'Stop', snooze: 'Snooze 💤', snoozed: m => `Snoozed for ${m} minutes 💤`, noSpeech: "Speech recognition isn't supported. Use manual time." }
+    };
+
+    let currentLang = 'ar-SA';
+    let targetAlarmTime = null;
+    let pendingAlarmTime = null;
+    let isAlarmRinging = false;
+    let selectedDays = [];
+    let audioCtx = null;
+    let lastFiredKey = '';
+    let customAudioURL = null;
+    let customAudioPlayer = null;
+    let fadeInterval = null;
+    let currentMathAnswer = 0;
+    let sleepAudioCtx = null;
+    let sleepNoiseNode = null;
+    let isSleepSoundPlaying = false;
+    let isSnoozed = false;
+
+    function store(k, v) { try { localStorage.setItem(k, v); } catch(e) {} }
+    function load(k) { try { return localStorage.getItem(k); } catch(e) { return null; } }
+
+    window.addEventListener('load', () => {
+        setTimeout(() => document.getElementById('splashScreen').classList.add('splash-hide'), 1500);
+        loadSettings();
+        restoreAlarm();
+        if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+
+    // ===== واجهة =====
+    function createRipple(event) {
+        const button = event.currentTarget;
+        const circle = document.createElement("span");
+        const diameter = Math.max(button.clientWidth, button.clientHeight);
+        const rect = button.getBoundingClientRect();
+        circle.style.width = circle.style.height = `${diameter}px`;
+        circle.style.left = `${event.clientX - rect.left - diameter/2}px`;
+        circle.style.top = `${event.clientY - rect.top - diameter/2}px`;
+        circle.classList.add("ripple");
+        const old = button.getElementsByClassName("ripple")[0];
+        if (old) old.remove();
+        button.appendChild(circle);
+        if (navigator.vibrate) navigator.vibrate(10);
+    }
+    document.querySelectorAll('button').forEach(btn => btn.addEventListener('click', createRipple));
+
+    function applyLanguage() {
+        const d = locales[currentLang];
+        document.getElementById('lblAlarm').textContent = d.alarm;
+        if (!targetAlarmTime) document.getElementById('statusMsg').textContent = d.ask;
+        document.getElementById('hintText').textContent = d.hint;
+        document.getElementById('cancelAlarmBtn').textContent = d.cancel;
+        document.querySelector('.manual-btn').textContent = d.manual;
+        document.getElementById('lblConfirm').textContent = d.confirmMsg;
+        document.querySelector('.btn-confirm').textContent = d.confirmBtn;
+        document.querySelector('.btn-retry').textContent = d.retryBtn;
+        document.getElementById('ringingMsg').textContent = d.wakeUp;
+        document.getElementById('stopBtn').textContent = d.stop;
+        document.getElementById('snoozeBtn').textContent = d.snooze;
+        document.documentElement.dir = currentLang === 'ar-SA' ? 'rtl' : 'ltr';
+        document.documentElement.lang = currentLang.split('-')[0];
+    }
+    function changeLanguage() {
+        currentLang = document.getElementById('langSelect').value;
+        store('voxLang', currentLang);
+        applyLanguage();
+        updateClock();
+    }
+
+    // ===== إعدادات =====
+    function openSettings(e) { if (e) e.preventDefault(); document.getElementById('settingsModal').style.display = 'flex'; }
+    function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; saveSettings(); updateClock(); if (targetAlarmTime) renderAlarm(); }
+    function changeTheme() {
+        const theme = document.getElementById('setTheme').value;
+        document.body.className = 'theme-' + theme;
+        store('voxTheme', theme);
+    }
+    function saveSettings() {
+        store('voxTheme', document.getElementById('setTheme').value);
+        store('vox24h', document.getElementById('set24Hour').checked);
+        store('voxFade', document.getElementById('setFadeIn').checked);
+        store('voxMath', document.getElementById('setMath').checked);
+        store('voxSnooze', document.getElementById('setSnoozeTime').value);
+    }
+    function loadSettings() {
+        const theme = load('voxTheme') || 'candy';
+        document.getElementById('setTheme').value = theme;
+        document.body.className = 'theme-' + theme;
+        if (load('vox24h') === 'true') document.getElementById('set24Hour').checked = true;
+        if (load('voxFade') === 'false') document.getElementById('setFadeIn').checked = false;
+        if (load('voxMath') === 'true') document.getElementById('setMath').checked = true;
+        if (load('voxSnooze')) document.getElementById('setSnoozeTime').value = load('voxSnooze');
+        const lang = load('voxLang');
+        if (lang && locales[lang]) { currentLang = lang; document.getElementById('langSelect').value = lang; }
+        applyLanguage();
+    }
+    function getSetting(key) { return load(key) === 'true'; }
+
+    // ===== حفظ المنبه =====
+    function persistAlarm() {
+        if (targetAlarmTime) store('voxAlarm', JSON.stringify({ t: targetAlarmTime, d: selectedDays }));
+        else try { localStorage.removeItem('voxAlarm'); } catch(e) {}
+    }
+    function restoreAlarm() {
+        try {
+            const s = JSON.parse(load('voxAlarm'));
+            if (s && s.t) {
+                targetAlarmTime = s.t; selectedDays = s.d || [];
+                document.querySelectorAll('.day-btn').forEach((b, i) => b.classList.toggle('active', selectedDays.includes(i)));
+                renderAlarm();
+                document.getElementById('statusMsg').textContent = locales[currentLang].success;
+            }
+        } catch(e) {}
+    }
+    function fmtTime(h, m) {
+        let ampm = '';
+        if (!getSetting('vox24h')) { ampm = h >= 12 ? ' PM' : ' AM'; h = h % 12 || 12; }
+        return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}${ampm}`;
+    }
+    function renderAlarm() {
+        const el = document.getElementById('alarmTimeDisplay');
+        el.textContent = fmtTime(targetAlarmTime.hours, targetAlarmTime.minutes);
+        el.style.color = "#38a169";
+        document.getElementById('cancelAlarmBtn').style.display = 'inline-block';
+    }
+
+    function toggleDay(btn, i) {
+        btn.classList.toggle('active');
+        selectedDays = selectedDays.includes(i) ? selectedDays.filter(d => d !== i) : [...selectedDays, i];
+        persistAlarm();
+    }
+
+    // ===== الساعة =====
+    function updateClock() {
+        const now = new Date();
+        const locale = currentLang === 'ar-SA' ? 'ar-EG' : currentLang;
+        document.getElementById('currentTime').textContent = fmtTime(now.getHours(), now.getMinutes());
+        document.getElementById('currentDate').textContent = new Intl.DateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'long' }).format(now);
+
+        if (targetAlarmTime && !isAlarmRinging) {
+            const dayOk = selectedDays.length === 0 || selectedDays.includes(now.getDay());
+            const key = `${now.toDateString()}-${now.getHours()}:${now.getMinutes()}`;
+            if (dayOk && now.getHours() === targetAlarmTime.hours && now.getMinutes() === targetAlarmTime.minutes && key !== lastFiredKey) {
+                lastFiredKey = key;
+                triggerAlarm();
+            }
+        }
+    }
+    setInterval(updateClock, 1000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) updateClock(); });
+
+    // ===== TTS =====
+    function speakText(text) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = currentLang; u.rate = 1;
+            window.speechSynthesis.speak(u);
+        }
+    }
+
+    // ===== التعرف على الصوت =====
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition = null;
+    if (SR) { recognition = new SR(); recognition.continuous = false; recognition.interimResults = false; }
+
+    function startListening(event) {
+        if (event) event.preventDefault();
+        if (!recognition) { document.getElementById('statusMsg').textContent = locales[currentLang].noSpeech; return; }
+        initAudio();
+        try { recognition.abort(); } catch(e) {}
+        recognition.continuous = false;
+        recognition.lang = currentLang;
+        document.getElementById('statusMsg').textContent = locales[currentLang].listening;
+        document.getElementById('statusMsg').style.color = "inherit";
+        document.getElementById('micBtn').classList.add('listening');
+        const done = () => document.getElementById('micBtn').classList.remove('listening');
+        recognition.onresult = e => parseVoiceInput(e.results[0][0].transcript);
+        recognition.onerror = done;
+        recognition.onend = done;
+        setTimeout(() => { try { recognition.start(); } catch(e) { done(); } }, 150);
+    }
+
+    function wordsToNumbers(text) {
+        const map = { twelve:12, eleven:11, ten:10, nine:9, eight:8, seven:7, six:6, five:5, four:4, three:3, two:2, one:1, thirteen:13, fourteen:14, fifteen:15, thirty:30, forty:40, fifty:50 };
+        let res = text;
+        for (const w in map) res = res.replace(new RegExp('\\b' + w + '\\b', 'gi'), map[w]);
+        return res;
+    }
+
+    function parseVoiceInput(text) {
+        let t = text.toLowerCase();
+        t = t.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+        t = wordsToNumbers(t);
+        t = t.replace(/\s+(و|and)\s+/g, ':');
+        const match = t.match(/(\d{1,2})\s*[:\s.]\s*(\d{1,2})/) || t.match(/(\d{1,2})/);
+        let hours = null, minutes = 0;
+        if (match) {
+            hours = parseInt(match[1]);
+            if (match.length > 2 && match[2] !== undefined) minutes = parseInt(match[2]);
+        }
+        if (hours !== null && hours <= 23 && minutes <= 59) {
+            let isPM = false;
+            if (t.includes('مساء') || t.includes('pm') || t.includes('p.m')) {
+                if (hours < 12) hours += 12;
+                isPM = true;
+            } else if (t.includes('صباح') || t.includes('am') || t.includes('a.m')) {
+                if (hours === 12) hours = 0;
+            } else if (hours >= 12) {
+                isPM = true;
+            } else if (new Date().getHours() >= 12) {
+                hours += 12; isPM = true;
+            }
+            pendingAlarmTime = { hours, minutes };
+            showConfirmPanel(hours, minutes, isPM);
+        } else {
+            const s = document.getElementById('statusMsg');
+            s.textContent = locales[currentLang].error;
+            s.style.color = "#e53e3e";
+        }
+    }
+
+    function showConfirmPanel(h, m, isPM) {
+        document.getElementById('mainPanel').classList.add('hidden');
+        document.getElementById('confirmPanel').style.display = 'flex';
+        document.getElementById('parsedTimeDisplay').textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+        document.getElementById('parsedPeriodDisplay').textContent = isPM ? locales[currentLang].pm : locales[currentLang].am;
+        playBeep();
+    }
+
+    function confirmAlarm(event) {
+        if (event) event.preventDefault();
+        if (!pendingAlarmTime) return;
+        targetAlarmTime = pendingAlarmTime;
+        pendingAlarmTime = null;
+        lastFiredKey = '';
+        isSnoozed = false;
+        document.getElementById('confirmPanel').style.display = 'none';
+        document.getElementById('mainPanel').classList.remove('hidden');
+        renderAlarm();
+        const s = document.getElementById('statusMsg');
+        s.textContent = locales[currentLang].success;
+        s.style.color = "#38a169";
+        persistAlarm();
+        playSuccessSound();
+        const ts = fmtTime(targetAlarmTime.hours, targetAlarmTime.minutes);
+        if (currentLang === 'ar-SA') {
+            const h12 = targetAlarmTime.hours % 12 || 12;
+            speakText(`تم ضبط المنبه الساعة ${h12} و ${targetAlarmTime.minutes} دقيقة ${targetAlarmTime.hours >= 12 ? 'مساءً' : 'صباحاً'}`);
+        } else speakText(`Alarm set for ${ts}`);
+    }
+
+    function retryListening(event) {
+        if (event) event.preventDefault();
+        document.getElementById('confirmPanel').style.display = 'none';
+        document.getElementById('mainPanel').classList.remove('hidden');
+        startListening();
+    }
+
+    function cancelAlarm(event) {
+        if (event) event.preventDefault();
+        targetAlarmTime = null;
+        isSnoozed = false;
+        document.getElementById('alarmTimeDisplay').textContent = "--:--";
+        document.getElementById('alarmTimeDisplay').style.color = "#e53e3e";
+        document.getElementById('statusMsg').textContent = locales[currentLang].ask;
+        document.getElementById('statusMsg').style.color = "inherit";
+        document.getElementById('cancelAlarmBtn').style.display = 'none';
+        selectedDays = [];
+        document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+        persistAlarm();
+    }
+
+    function openManualPicker(event) {
+        if (event) event.preventDefault();
+        const input = document.getElementById('manualTimeInput');
+        try { input.showPicker(); } catch(e) { input.focus(); input.click(); }
+    }
+    function handleManualTime() {
+        const input = document.getElementById('manualTimeInput');
+        if (!input.value) return;
+        const [h, m] = input.value.split(':').map(Number);
+        input.value = '';
+        pendingAlarmTime = { hours: h, minutes: m };
+        showConfirmPanel(h, m, h >= 12);
+    }
+
+    // ===== صوت المطر =====
+    function toggleSleepSound() {
+        const btn = document.getElementById('sleepSoundBtn');
+        if (isSleepSoundPlaying) {
+            if (sleepNoiseNode) { try { sleepNoiseNode.stop(); } catch(e) {} sleepNoiseNode.disconnect(); }
+            isSleepSoundPlaying = false;
+            btn.classList.remove('active');
+            btn.textContent = "🌧️ تشغيل صوت المطر للنوم";
+        } else {
+            if (!sleepAudioCtx) sleepAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (sleepAudioCtx.state === 'suspended') sleepAudioCtx.resume();
+            const size = sleepAudioCtx.sampleRate * 2;
+            const buffer = sleepAudioCtx.createBuffer(1, size, sleepAudioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
+            sleepNoiseNode = sleepAudioCtx.createBufferSource();
+            sleepNoiseNode.buffer = buffer; sleepNoiseNode.loop = true;
+            const filter = sleepAudioCtx.createBiquadFilter();
+            filter.type = 'lowpass'; filter.frequency.value = 400;
+            const gain = sleepAudioCtx.createGain(); gain.gain.value = 0.3;
+            sleepNoiseNode.connect(filter); filter.connect(gain); gain.connect(sleepAudioCtx.destination);
+            sleepNoiseNode.start();
+            isSleepSoundPlaying = true;
+            btn.classList.add('active');
+            btn.textContent = "⏹️ إيقاف صوت المطر";
+        }
+    }
+
+    // ===== النغمة =====
+    function handleAudioUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        if (customAudioPlayer) { customAudioPlayer.pause(); customAudioPlayer = null; }
+        if (customAudioURL) URL.revokeObjectURL(customAudioURL);
+        customAudioURL = URL.createObjectURL(file);
+        document.getElementById('fileNameDisplay').textContent = "✅ " + file.name;
+    }
+    function initAudio() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+    function playBeep() {
+        initAudio();
+        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+    }
+    function playSuccessSound() {
+        initAudio();
+        [523, 659, 784].forEach((freq, i) => {
+            const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+            const t = audioCtx.currentTime + i * 0.1;
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.0001, t);
+            gain.gain.linearRampToValueAtTime(0.1, t + 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+            osc.start(t); osc.stop(t + 0.3);
+        });
+    }
+
+    // ===== الرنين =====
+    function triggerAlarm() {
+        isAlarmRinging = true;
+        document.getElementById('ringingScreen').style.display = 'flex';
+        if (navigator.vibrate) navigator.vibrate([500, 500, 500, 500, 500, 500]);
+        if (isSleepSoundPlaying) toggleSleepSound();
+        speakText(locales[currentLang].wakeUp);
+
+        if (getSetting('voxMath')) {
+            document.getElementById('mathPuzzle').style.display = 'block';
+            document.getElementById('stopBtn').style.display = 'none';
+            const a = Math.floor(Math.random() * 10) + 5, b = Math.floor(Math.random() * 10) + 5;
+            currentMathAnswer = a + b;
+            document.getElementById('mathQuestion').textContent = `${a} + ${b} = ?`;
+            document.getElementById('mathInput').value = '';
+        } else {
+            document.getElementById('mathPuzzle').style.display = 'none';
+            document.getElementById('stopBtn').style.display = 'block';
+        }
+
+        clearInterval(fadeInterval);
+        const fade = getSetting('voxFade');
+        if (customAudioURL) {
+            if (customAudioPlayer) customAudioPlayer.pause();
+            customAudioPlayer = new Audio(customAudioURL);
+            customAudioPlayer.loop = true;
+            customAudioPlayer.volume = fade ? 0 : 1;
+            customAudioPlayer.play().catch(() => {});
+            if (fade) {
+                let vol = 0;
+                fadeInterval = setInterval(() => {
+                    vol += 0.05;
+                    if (vol <= 1) customAudioPlayer.volume = vol; else clearInterval(fadeInterval);
+                }, 500);
+            }
+        } else {
+            initAudio();
+            let vol = fade ? 0.01 : 0.2;
+            const beep = () => {
+                const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.type = 'square'; osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+                if (fade && vol < 0.3) vol += 0.02;
+            };
+            beep();
+            fadeInterval = setInterval(beep, 500);
+        }
+        startVoiceStopListener();
+    }
+
+    let stopListenerActive = false;
+    function startVoiceStopListener() {
+        if (!recognition || stopListenerActive || getSetting('voxMath')) return;
+        stopListenerActive = true;
+        try { recognition.abort(); } catch(e) {}
+        recognition.lang = currentLang;
+        recognition.continuous = true;
+        recognition.onresult = e => {
+            const text = e.results[e.results.length - 1][0].transcript.toLowerCase();
+            if (text.includes('توقف') || text.includes('ايقاف') || text.includes('إيقاف') || text.includes('stop')) stopRinging();
+        };
+        recognition.onerror = () => {};
+        recognition.onend = () => { if (isAlarmRinging && stopListenerActive) { try { recognition.start(); } catch(e) {} } };
+        setTimeout(() => { try { recognition.start(); } catch(e) {} }, 200);
+    }
+    function endVoiceStopListener() {
+        stopListenerActive = false;
+        if (recognition) {
+            recognition.onend = null;
+            try { recognition.abort(); } catch(e) {}
+            recognition.continuous = false;
+        }
+    }
+
+    function checkMath(event) {
+        if (event) event.preventDefault();
+        const input = document.getElementById('mathInput');
+        if (parseInt(input.value) === currentMathAnswer) stopRinging();
+        else {
+            input.style.borderColor = 'red'; input.value = '';
+            setTimeout(() => input.style.borderColor = '#ccc', 500);
+        }
+    }
+
+    function silence() {
+        isAlarmRinging = false;
+        endVoiceStopListener();
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        document.getElementById('ringingScreen').style.display = 'none';
+        clearInterval(fadeInterval);
+        if (customAudioPlayer) { customAudioPlayer.pause(); customAudioPlayer.currentTime = 0; }
+        if (navigator.vibrate) navigator.vibrate(0);
+    }
+
+    function stopRinging(event) {
+        if (event) event.preventDefault();
+        silence();
+        // المنبه المتكرر يبقى فعّالاً؛ غير المتكرر يُلغى
+        if (selectedDays.length > 0 && !isSnoozed) { renderAlarm(); }
+        else if (isSnoozed) {
+            isSnoozed = false;
+            let saved = null; try { saved = JSON.parse(load('voxAlarm')); } catch(e) {}
+            if (saved && saved.d && saved.d.length) restoreAlarm(); else cancelAlarm();
+        }
+        else cancelAlarm();
+    }
+
+    function snoozeAlarm(event) {
+        if (event) event.preventDefault();
+        silence();
+        const mins = parseInt(document.getElementById('setSnoozeTime').value);
+        const now = new Date();
+        now.setMinutes(now.getMinutes() + mins);
+        // نحفظ المنبه الأصلي المتكرر ثم نؤقتاً نؤجل
+        const original = load('voxAlarm');
+        targetAlarmTime = { hours: now.getHours(), minutes: now.getMinutes() };
+        selectedDays = [];
+        isSnoozed = true;
+        lastFiredKey = '';
+        let orig = null; try { orig = JSON.parse(original); } catch(e) {}
+        if (!(orig && orig.d && orig.d.length)) try { localStorage.removeItem('voxAlarm'); } catch(e) {}
+        renderAlarm();
+        const s = document.getElementById('statusMsg');
+        s.textContent = locales[currentLang].snoozed(mins);
+        s.style.color = "#d35400";
+        document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+    }
+
+    updateClock();
+    applyLanguage();
+</script>
+</body>
+</html>
